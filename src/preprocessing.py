@@ -23,7 +23,7 @@ def save_clean_data(df, output_path):
     df.to_csv(output_path, index=True, index_label="Date")
 
 if __name__ == "__main__":
-    input_path = "data/raw/TSLA_2020-01-01_2025-05-27.csv"
+    input_path = "data/raw/TSLA_2020-01-01_2025-05-28.csv"
     output_path = "data/processed/tsla_processed.csv"
 
     df = load_and_clean_data(input_path)
