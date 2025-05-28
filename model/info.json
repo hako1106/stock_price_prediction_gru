@@ -1,0 +1,57 @@
+{
+  "ticker": "TSLA",
+  "features": [
+    "Close"
+  ],
+  "sequence_length": 60,
+  "epochs": 100,
+  "batch_size": 32,
+  "validation_ratio": 0.2,
+  "model_architecture": [
+    {
+      "layer": "Input",
+      "shape": [
+        60,
+        1
+      ]
+    },
+    {
+      "layer": "GRU",
+      "units": 128,
+      "return_sequences": true
+    },
+    {
+      "layer": "GRU",
+      "units": 64,
+      "return_sequences": false
+    },
+    {
+      "layer": "Dense",
+      "units": 1
+    }
+  ],
+  "loss_function": "MeanSquaredError",
+  "optimizer": "adam",
+  "early_stopping": {
+    "monitor": "val_loss",
+    "patience": 10,
+    "restore_best_weights": true
+  },
+  "training_history": {
+    "best_epoch": 70,
+    "best_val_loss": 0.00033070973586291075,
+    "corresponding_train_loss": 0.000572497840039432,
+    "note": "These values correspond to the best model checkpoint restored by early stopping."
+  },
+  "evaluation_metrics": {
+    "test_mae": 9.06328930762453,
+    "test_rmse": 12.650304865436569,
+    "test_mape": 3.253870007907907,
+    "test_r2": 0.9736076238900805
+  },
+  "data_paths": {
+    "processed_data": "../data/processed/tsla_processed.csv"
+  },
+  "scaler": "MinMaxScaler",
+  "notes": "Train/Val split was based on 80/20 of training data. Test set is the last 20% of the original dataset."
+}
