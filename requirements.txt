@@ -8,3 +8,5 @@ tensorflow
 joblib
 yfinance
 ipykernel
+fastapi
+uvicorn
