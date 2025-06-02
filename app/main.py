@@ -1,38 +1,50 @@
-import os
-import pandas as pd
-from src.data_crawler import crawl_stock_data
-from src.data_cleaner import clean_stock_data
-from src.model import StockPriceModel
+from datetime import datetime, timedelta
+from src.utils import clean_stock_data
+from src.model import StockPriceModel, feature_columns
+from src.utils import get_last_run_time, save_current_run_time
+from src.data_crawler import update_stock_data
+
 
 def main():
-    # Config
+    # === Config ===
     ticker = "TSLA"
-    start_date = "2020-01-01"
-    output_dir = "data/raw"
+    data_path = f"data/daily_updates/{ticker}.csv"
     model_path = "model/model.keras"
     scaler_path = "model/scaler.pkl"
 
-    # Step 1: Crawl stock data
-    print("Crawling data...")
-    crawl_stock_data(ticker=ticker, start=start_date, end=None, output_path=output_dir)
+    # === Kiểm tra lần chạy gần nhất ===
+    last_run = get_last_run_time()
+    if last_run:
+        delta = datetime.now() - last_run
+        print(f"Last run: {delta.days} days, {delta.seconds // 3600} hours ago.")
+        if delta < timedelta(hours=6):
+            print("Skipped: already ran recently.")
+            return
 
-    # Step 2: Load and clean data
-    filename = f"{ticker}_{start_date}_{pd.Timestamp.now().strftime('%Y-%m-%d')}.csv".replace(":", "-")
-    file_path = os.path.join(output_dir, filename)
-    df = pd.read_csv(file_path)
-    df_clean = clean_stock_data(df)
+    # === Cập nhật dữ liệu ===
+    df_updated = update_stock_data(ticker=ticker,
+                                   file_path=data_path,
+                                   window_size=60)
+    if df_updated.empty:
+        print("No data to predict.")
+        return
 
-    # Step 3: Extract features (last available row)
+    # === Làm sạch dữ liệu ===
+    df_clean = clean_stock_data(df_updated)
+
+    # === Lấy dòng dữ liệu mới nhất để dự đoán ===
     latest_row = df_clean.iloc[-1]
-    features = [latest_row[col] for col in ['Close']]  # Adjust based on model's input features
+    features = [latest_row[col] for col in feature_columns]
 
-    # Step 4: Predict stock price
-    print("Loading model and making prediction...")
+    # === Dự đoán ===
+    print("Predicting with latest data...")
     model = StockPriceModel(model_path, scaler_path)
     prediction = model.predict(features)
+    print(f"Predicted price for {ticker} (next day): ${prediction:.2f}")
 
-    # Step 5: Output result
-    print(f"Predicted price for {ticker} on next day (based on last data): ${prediction:.2f}")
+    # === Cập nhật thời gian chạy ===
+    save_current_run_time()
+
 
 if __name__ == "__main__":
     main()
